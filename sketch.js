@@ -4,7 +4,7 @@ const gameWidth = 800
 let breakout =  new Breakout(gameWidth, gameHeight);
 
 function setup() {
-    breakout.addBall(0, 0)
+    breakout.addBall(gameWidth/2, gameHeight/2)
     createCanvas(gameWidth, gameHeight);
 }
 

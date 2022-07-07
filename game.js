@@ -22,10 +22,22 @@ class Breakout {
     }
 
     // add ball 
-    addBall(x, y, xv = 2, yv = 2) {
+    addBall(x, y, xv = 0, yv = 2) {
         let newBall = new Ball(x, y, xv, yv);
         newBall.game = this;
         this.balls.push(newBall)
+    }
+
+    // Remove Destroied Balls.
+    removeDestroiedBalls() {
+        for (let i in this.balls) {
+            // remove destroyed balls
+            if (this.balls[i].destroyed) {
+                // removing the destroyed ball.
+                this.balls.splice(i, 1);
+                console.log("Ball Removed at index: " + i)
+            }
+        }
     }
 
     // gameloop 
@@ -34,6 +46,7 @@ class Breakout {
         for (let ball of this.balls) {
             ball.step()
         }
+        this.removeDestroiedBalls();
 
         // step through board 
         this.board.step()
@@ -42,12 +55,15 @@ class Breakout {
 
 class Ball {
     constructor(x, y, xv, yv) {
-        this.ballSize = 30;
+        this.ballSize = 15;
         this.x = x; // ball x pos
         this.y = y; // ball y pos
 
         this.xv = xv; // ball x velocity (px per frame)
         this.yv = yv; // ball y velocity 
+
+        // Destroyrd
+        this.destroyed = false;
     }
 
     // step the ball state farther
@@ -55,7 +71,25 @@ class Ball {
         if (!this.game) throw new Error("Game Class Is required.")
         this.x += this.xv
         this.y += this.yv
+        this.detectCollision()
     }
+
+    // detect collision
+    detectCollision() {
+        if (this.x > this.game.height) { this.xv = - Math.abs(this.xv); return; };
+        if (this.x < 0) { this.xv = Math.abs(this.xv); return };
+        if (this.y < 0) { this.yv = Math.abs(this.yv); return };
+
+        // if (this.y > this.game.width) { this.yv = - Math.abs(this.yv); return; };
+        // this.destroyed = true;
+        if (this.y > this.game.width) { this.destroy(); return; };
+    }
+
+    // destroy the ball if it falls out of screen.
+    destroy() {
+        this.destroyed = true; // cleanup the ball class after some time.
+    }
+
 
     // Draw The Circle
     draw() {
@@ -76,8 +110,37 @@ class Board {
 
     step() {
         if (!this.game) throw new Error("Game Class Is required.")
-        this.pos = mouseX -  (this.length/2)
+        this.pos = mouseX - (this.length / 2)
+        this.bounce()
     }
+
+    // lets bounce the ball if it touches the board.
+    bounce() {
+        let boardStart = this.pos
+        let boardEnd = this.pos + this.length
+        // console.log(`Start: ${boardStart}; end: ${boardEnd}; pos: ${this.pos}`)
+
+        for (let ball of this.game.balls) {
+            // no need to do anything if the ball is not close to the board.
+            if (ball.y < (this.game.width  - this.width)) continue;
+            
+            if (ball.x > boardStart && ball.x < boardEnd) {
+                // bounce the ball in y direction
+                ball.yv = -Math.abs(ball.yv);
+
+                // lets also adjust the ball x velocity depending on where the ball hit the board.
+
+                let boardCenter = this.pos + (this.length /2)
+                let destance = ball.x - boardCenter;
+                let xv = map(destance,  -(this.length /2), (this.length /2), -4, 4)
+                // console.log(xv)
+                ball.xv = xv;
+            }
+            
+            
+        }
+    }
+
 
     draw() {
         fill(0)
